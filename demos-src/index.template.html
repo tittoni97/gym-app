@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(/embed/.test(location.search))document.documentElement.classList.add('embed')</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exercise demos</title>
+<style>
+:root{--ink:#111A22;--mute:#566470;--line:#D6DCE2;--soft:#F3F5F7;--acc:#D7263D;--bg:#EDF0F3;
+  --disp:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;--body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:12px}
+.card{background:#fff;border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:16px;overflow:hidden}
+.hd{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px}
+.nm{font-family:var(--disp);font-weight:700;font-size:24px}
+.sr{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--mute)}
+#stage{position:relative;height:min(62vh,440px);margin:0 10px;border-radius:12px;overflow:hidden;touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute)}
+.hud{position:absolute;left:8px;top:8px;display:flex;gap:6px;pointer-events:none}
+.hud span{background:rgba(255,255,255,.88);border-radius:8px;padding:3px 9px;font-weight:700;font-size:14px}
+#phase{color:var(--acc)}
+.drag{position:absolute;right:8px;bottom:8px;font-size:11.5px;color:var(--mute);background:rgba(255,255,255,.8);border-radius:6px;padding:2px 7px;pointer-events:none}
+#cues{list-style:none;margin:10px 14px 0;padding:0;display:grid;gap:6px}
+#cues li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:15px;line-height:1.3;padding:6px 8px;border-radius:10px;border-left:3px solid transparent;color:var(--mute);transition:background .15s}
+#cues li b{font-family:var(--disp);font-size:17px;color:var(--mute)}
+#cues li.on{background:#FDECEE;border-left-color:var(--acc);color:var(--ink)}
+#cues li.on b{color:var(--acc)}
+#exsel{flex:1;min-width:0;font:inherit;font-family:var(--disp);font-weight:700;font-size:21px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--soft);color:var(--ink);margin-right:10px}
+.nav{display:flex;gap:6px;padding:0 14px 0}
+.nav button{flex:1;min-height:38px;border:1px solid var(--line);background:var(--soft);border-radius:10px;font:inherit;font-weight:600;color:var(--ink);cursor:pointer}
+.row{display:flex;gap:8px;padding:10px 14px}
+.seg{flex:1;display:flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button,#play{flex:1;border:0;background:none;border-radius:9px;min-height:38px;font:inherit;font-weight:600;font-size:14px;color:var(--mute);cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+#play{flex:none;width:84px;background:var(--acc);color:#fff}
+.zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.92);font-size:22px;font-weight:700;line-height:1;cursor:pointer;color:var(--ink)}
+.foot{font-size:12px;color:var(--mute);padding:0 14px 14px}
+html.embed,html.embed body{height:100%;margin:0;background:#000;--ink:#fff;--mute:#8e9196;--acc:#fff;--soft:#1f2124;--line:#2a2c30}
+html.embed main{padding:0;max-width:none;height:100%;display:flex;flex-direction:column}
+html.embed .card{border:0;border-radius:0;background:#000;height:100%;display:flex;flex-direction:column;overflow:hidden}
+html.embed .hd,html.embed .nav,html.embed .row,html.embed .foot,html.embed .drag,html.embed .zoom,html.embed .hud{display:none}
+html.embed #stage{flex:1 1 auto;height:auto;min-height:0;margin:0 12px;border-radius:22px}
+html.embed #cues{margin:12px 16px 18px;gap:2px;flex:none}
+html.embed #cues li{font-size:16px;padding:9px 10px;border-radius:14px;border-left:0;color:#8e9196;grid-template-columns:24px 1fr}
+html.embed #cues li b{font-size:18px;color:#8e9196}
+html.embed #cues li.on{background:#1f2124;color:#fff}
+html.embed #cues li.on b{color:#fff}
+</style>
+</head>
+<body>
+<main>
+<article class="card">
+  <div class="hd"><select id="exsel" aria-label="Exercise"></select><span class="sr" id="sets"></span></div>
+  <div id="stage"><div id="loading">Loading 3D model…</div>
+    <div class="hud"><span id="phase"></span></div>
+    <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+    <span class="drag">Drag to rotate</span></div>
+  <ol id="cues"></ol>
+  <div class="nav"><button id="prev">← Previous</button><button id="next">Next →</button></div>
+  <div class="row">
+    <div class="seg"><button data-view="side" aria-pressed="false">Side</button><button data-view="front" aria-pressed="false">Front</button><button data-view="three" aria-pressed="true">¾</button><button data-view="back" aria-pressed="false">Back</button></div>
+  </div>
+  <div class="row" style="padding-top:0">
+    <div class="seg"><button data-speed="0.5" aria-pressed="false">0.5×</button><button data-speed="1" aria-pressed="true">1×</button></div>
+    <button id="play">Pause</button>
+  </div>
+  <p class="foot" id="foot"></p>
+</article>
+</main>
+<script>/*BUNDLE*/</script>
+</body>
+</html>

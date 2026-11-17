@@ -1,0 +1,30 @@
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+    async with async_playwright() as p:
+        b = await p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--use-gl=swiftshader","--enable-unsafe-swiftshader","--ignore-gpu-blocklist"])
+        ctx = await b.new_context(viewport={"width":390,"height":844}, device_scale_factor=1, has_touch=True)
+        pg = await ctx.new_page(); errs=[]
+        pg.on("pageerror", lambda e: errs.append("PE "+str(e)[:300])); pg.on("console", lambda m: errs.append(m.text[:200]) if m.type=="error" and "TUNNEL" not in m.text else None)
+        pg.on("dialog", lambda d: asyncio.ensure_future(d.accept()))
+        await pg.goto("http://localhost:8765/index.html"); await pg.wait_for_timeout(1200)
+        async def shot(n): await pg.screenshot(path=f"/tmp/q_{n}.png")
+        await shot("home")
+        await pg.click("[data-a=bodygo]"); await pg.wait_for_timeout(300); await shot("weight")
+        await pg.click("[data-a=tab][data-v=home]"); await pg.wait_for_timeout(200)
+        await pg.click("nav button:nth-child(2)"); await pg.click("[data-a=start] >> nth=0"); await pg.wait_for_timeout(300)
+        await pg.fill(".xo .set >> nth=0 >> input[data-f=reps]","125"); await pg.press(".xo .set >> nth=0 >> input[data-f=reps]","Tab"); await pg.wait_for_timeout(200)
+        await pg.fill(".xo .set >> nth=1 >> input[data-f=kg]","102.5"); await pg.press(".xo .set >> nth=1 >> input[data-f=kg]","Tab"); await pg.wait_for_timeout(200)
+        await shot("sets")
+        await pg.evaluate("document.querySelector('main').scrollTop=400"); await pg.wait_for_timeout(600); await shot("compact")
+        await pg.evaluate("document.querySelector('main').scrollTop=300"); await pg.wait_for_timeout(500); await shot("expand")
+        await pg.click("#dock .dock-t >> nth=0"); await pg.wait_for_timeout(400); await shot("wmenu")
+        await pg.click("[data-a=wtog][data-v=sound]"); await pg.wait_for_timeout(300)
+        print(await pg.evaluate("JSON.stringify(__gym.S().wk)"))
+        await pg.click("[data-a=close]"); await pg.wait_for_timeout(300)
+        await pg.evaluate("__gym.go('more','set')"); await pg.wait_for_timeout(300)
+        await pg.click("[data-a=ptog][data-v='15']"); await pg.click("[data-a=ptog][data-v='20']"); await pg.wait_for_timeout(200)
+        await pg.evaluate("document.querySelector('main').scrollTop=0"); await shot("plates_set")
+        print(await pg.evaluate("JSON.stringify(__gym.S().plates)"))
+        print(errs); await b.close()
+asyncio.run(main())
